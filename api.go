@@ -32,12 +32,10 @@ func fswapPreOrderHandler(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		if ENABLE_USERME {
-			user, err := mixin.UserMe(ctx, token)
-			if err != nil || user.UserID == "" {
-				http.Error(w, "Invalid access token", http.StatusInternalServerError)
-				return
-			}
+		user, err := mixin.UserMe(ctx, token)
+		if err != nil || user.UserID == "" {
+			http.Error(w, "Invalid access token", http.StatusInternalServerError)
+			return
 		}
 
 		client, ok := ctx.Value("client").(*fswap.Client)
@@ -75,8 +73,9 @@ func fswapPreOrderHandler(ctx context.Context) http.HandlerFunc {
 		response := map[string]string{
 			"memo": memo,
 			"follow_id": followID,
-			// "code": "",
-			// "code_url": "",
+			"client_id": user.UserID,
+			// "code": "CAN BE ADDED IN FUTURE",
+			// "code_url": "CAN BE ADDED IN FUTURE",
 		}
 		jsonResponse, err := json.Marshal(response)
 		if err != nil {
@@ -91,6 +90,7 @@ func fswapPreOrderHandler(ctx context.Context) http.HandlerFunc {
 }
 
 // Parameters:
+// clientId: The client ID of the bot
 // assetId: The ID of the asset to be transferred
 // amount: The amount of the asset to be transferred
 // memo: The memo for the transaction (generated from /4swap/preorder)
@@ -110,12 +110,7 @@ func mixinTransferHandler(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		user, err := mixin.UserMe(ctx, token)
-		if err != nil || user.UserID == "" {
-			http.Error(w, "Invalid access token", http.StatusInternalServerError)
-			return
-		}	
-	
+		clientId := r.FormValue("clientId")
 		assetId := r.FormValue("assetId")
 		amount := r.FormValue("amount")
 		memo := r.FormValue("memo")
@@ -131,8 +126,11 @@ func mixinTransferHandler(ctx context.Context) http.HandlerFunc {
 			http.Error(w, "Missing required parameter: memo", http.StatusBadRequest)
 			return
 		}
-		
-		request, err := MixinTransferInit(ctx, token, assetId, amount, memo)
+		if clientId == "" {
+			http.Error(w, "Missing required parameter: clientId", http.StatusBadRequest)
+			return
+		}
+		request, err := MixinTransferInit(ctx, clientId, token, assetId, amount, memo)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

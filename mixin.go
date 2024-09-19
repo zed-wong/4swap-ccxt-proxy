@@ -23,28 +23,25 @@ import (
 */
 
 // Parameters:
+// clientId: bot client id
 // token: jwt token from ccxt
 // assetId: asset id
 // amount: amount to transfer
 // memo: memo for the transaction
-func MixinTransferInit(ctx context.Context, token, assetId, amount, memo string) (*mixin.SafeTransactionRequest, error) {
+func MixinTransferInit(ctx context.Context, clientId, token, assetId, amount, memo string) (*mixin.SafeTransactionRequest, error) {
 	// take jwt token from ccxt, sign /safe/outputs
 	client := mixin.NewFromAccessToken(token)
 
-	// step 0: get user info from jwt token
-	me, err := client.UserMe(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user me: %w", err)
-	}
-	fmt.Printf("me: %+v\n", me)
-
 	// step 1: get unspent outputs
 	utxos, err := client.SafeListUtxos(ctx, mixin.SafeListUtxoOption{
-		Members: []string{me.UserID},
-		Limit:   1,
-		State:   mixin.SafeUtxoStateUnspent,
+		Members: 	 []string{clientId},
+		Threshold: 1,
+		Asset:     assetId,
+		State:     mixin.SafeUtxoStateUnspent,
 	})
+	fmt.Printf("utxos: %+v\n", utxos)
 	b := mixin.NewSafeTransactionBuilder(utxos)
+	fmt.Printf("b: %+v\n", b)
 
 	// step 2: build transaction
 	mtgGroup := ctx.Value(MTG_GROUP).(*fswap.Group)
