@@ -38,10 +38,17 @@ Parameters:
 curl -i -X GET -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8080/4swap/preorder?payAssetId="4d8c508b-91c5-375b-92b0-ee702ed2dac5"&fillAssetId="31d2ea9c-95eb-3355-b65b-ba096853bc18"&payAmount="0.01"
 ```
 
-### POST /mixin/
+### POST /mixin/encodetx
 
+#### Request
 
+Parameters:
+- tx: The string of the transaction.
+- sigs: The signatures of the transaction. (empty by default)
 
+#### Response
+
+- raw: The raw of the transaction.
 
 ## Example
 

@@ -9,8 +9,10 @@ import (
 	"github.com/gofrs/uuid"
 	"github.com/fox-one/mixin-sdk-go/v2"
 	fswap "github.com/fox-one/4swap-sdk-go/v2"
+	"github.com/fox-one/mixin-sdk-go/v2/mixinnet"
 )
 
+// POST /4swap/preorder
 // Parameters:
 // payAssetId: The ID of the asset to be paid
 // fillAssetId: The ID of the asset to be received
@@ -89,52 +91,32 @@ func fswapPreOrderHandler(ctx context.Context) http.HandlerFunc {
 	}
 }
 
+// POST /mixin/encodetx
 // Parameters:
-// clientId: The client ID of the bot
-// assetId: The ID of the asset to be transferred
-// amount: The amount of the asset to be transferred
-// memo: The memo for the transaction (generated from /4swap/preorder)
+// tx: the string of the transaction
+// sigs: the signatures map
 //
-// note: The JWT token must be signed with /safe/outputs with params
-// 
 // Response:
-// Fields requied for creating ghostkeys
-func mixinTransferInitHandler(ctx context.Context) http.HandlerFunc {
+// raw: the raw of the transaction
+func mixinEncodeHandler(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			http.Error(w, "Authorization header missing", http.StatusUnauthorized)
+		tx := r.FormValue("tx")
+		sigss := r.FormValue("sigs")
+		var sigs []map[uint16]*mixinnet.Signature
+		if sigss == "" {
+			sigs = []map[uint16]*mixinnet.Signature{}
+		}
+		if tx == "" {
+			http.Error(w, "Missing required parameter: tx", http.StatusBadRequest)
 			return
 		}
-
-		token := strings.TrimPrefix(authHeader, "Bearer ")
-		if token == authHeader {
-			http.Error(w, "Invalid token format", http.StatusUnauthorized)
-			return
-		}
-
-		assetId := r.FormValue("assetId")
-		amount := r.FormValue("amount")
-		memo := r.FormValue("memo")
-		if assetId == "" {
-			http.Error(w, "Missing required parameter: assetId", http.StatusBadRequest)
-			return
-		}
-		if amount == "" {
-			http.Error(w, "Missing required parameter: amount", http.StatusBadRequest)
-			return
-		}
-		if memo == "" {
-			http.Error(w, "Missing required parameter: memo", http.StatusBadRequest)
-			return
-		}
-		request, err := MixinTransferInit(ctx, token, assetId, amount, memo)
+		raw, err := EncodeSafeTx(tx, sigs)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 		response := map[string]interface{}{
-			"request": request,
+			"raw": raw,
 		}
 		jsonResponse, err := json.Marshal(response)
 		if err != nil {
@@ -147,34 +129,19 @@ func mixinTransferInitHandler(ctx context.Context) http.HandlerFunc {
 	}
 }
 
-func mixinTransferConfirmHandler(ctx context.Context) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			http.Error(w, "Authorization header missing", http.StatusUnauthorized)
-			return
-		}
-
-		token := strings.TrimPrefix(authHeader, "Bearer ")
-		if token == authHeader {
-			http.Error(w, "Invalid token format", http.StatusUnauthorized)
-			return
-		}
-	}
-}
-
-
 func StartAPIServer(ctx context.Context) {
 	group := ctx.Value(MTG_GROUP)
 	if group == nil {
 		panic("4swap MTG group not found in context")
 	}
-	fmt.Printf("MTG Group loaded: %+v\n", group)
 	http.HandleFunc("/4swap/preorder", fswapPreOrderHandler(ctx))
-	http.HandleFunc("/mixin/transfer/init", mixinTransferInitHandler(ctx))
-
+	http.HandleFunc("/mixin/encodetx", mixinEncodeHandler(ctx))
+	
 	host := ctx.Value(HOST_KEY).(string)
 	port := ctx.Value(PORT_KEY).(int)
+	fmt.Printf("\n\033[1;34mStarting API server on \033[1;32m%s:%d\033[0m\n", host, port)
+	fmt.Printf("\033[1;33m[POST] \033[1;36m/4swap/preorder\033[0m - Endpoint to create a preorder for 4swap transactions (auth required)\n")
+	fmt.Printf("\033[1;33m[POST] \033[1;36m/mixin/encodetx\033[0m - Endpoint to encode a Mixin transaction\n")
 	address := fmt.Sprintf("%s:%d", host, port)
 	if err := http.ListenAndServe(address, nil); err != nil {
 		panic(err)
