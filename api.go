@@ -95,8 +95,11 @@ func fswapPreOrderHandler(ctx context.Context) http.HandlerFunc {
 // amount: The amount of the asset to be transferred
 // memo: The memo for the transaction (generated from /4swap/preorder)
 //
-// note: The JWT token must be signed with /safe/outputs
-func mixinTransferHandler(ctx context.Context) http.HandlerFunc {
+// note: The JWT token must be signed with /safe/outputs with params
+// 
+// Response:
+// Fields requied for creating ghostkeys
+func mixinTransferInitHandler(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
@@ -110,7 +113,6 @@ func mixinTransferHandler(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		clientId := r.FormValue("clientId")
 		assetId := r.FormValue("assetId")
 		amount := r.FormValue("amount")
 		memo := r.FormValue("memo")
@@ -126,11 +128,7 @@ func mixinTransferHandler(ctx context.Context) http.HandlerFunc {
 			http.Error(w, "Missing required parameter: memo", http.StatusBadRequest)
 			return
 		}
-		if clientId == "" {
-			http.Error(w, "Missing required parameter: clientId", http.StatusBadRequest)
-			return
-		}
-		request, err := MixinTransferInit(ctx, clientId, token, assetId, amount, memo)
+		request, err := MixinTransferInit(ctx, token, assetId, amount, memo)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -149,6 +147,23 @@ func mixinTransferHandler(ctx context.Context) http.HandlerFunc {
 	}
 }
 
+func mixinTransferConfirmHandler(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			http.Error(w, "Authorization header missing", http.StatusUnauthorized)
+			return
+		}
+
+		token := strings.TrimPrefix(authHeader, "Bearer ")
+		if token == authHeader {
+			http.Error(w, "Invalid token format", http.StatusUnauthorized)
+			return
+		}
+	}
+}
+
+
 func StartAPIServer(ctx context.Context) {
 	group := ctx.Value(MTG_GROUP)
 	if group == nil {
@@ -156,7 +171,7 @@ func StartAPIServer(ctx context.Context) {
 	}
 	fmt.Printf("MTG Group loaded: %+v\n", group)
 	http.HandleFunc("/4swap/preorder", fswapPreOrderHandler(ctx))
-	http.HandleFunc("/mixin/transfer", mixinTransferHandler(ctx))
+	http.HandleFunc("/mixin/transfer/init", mixinTransferInitHandler(ctx))
 
 	host := ctx.Value(HOST_KEY).(string)
 	port := ctx.Value(PORT_KEY).(int)

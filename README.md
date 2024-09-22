@@ -38,23 +38,7 @@ Parameters:
 curl -i -X GET -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8080/4swap/preorder?payAssetId="4d8c508b-91c5-375b-92b0-ee702ed2dac5"&fillAssetId="31d2ea9c-95eb-3355-b65b-ba096853bc18"&payAmount="0.01"
 ```
 
-### POST /mixin/transfer
-
-#### Request
-
-Headers:
-- Authorization: The JWT token requested from mixin api by sign `/safe/outputs`.
-
-Parameters:
-- asset_id: The ID of the asset to be transferred.
-- amount: The amount of the asset to be transferred.
-- trace_id: The trace ID of the transaction.
-
-#### Response
-
-
-
-
+### POST /mixin/
 
 
 
@@ -75,12 +59,3 @@ Date: Wed, 18 Sep 2024 16:26:32 GMT
 Content-Length: 134
 
 {"client_id":"51186d7e-d488-417d-a031-b4e34f4fdf86","follow_id":"e3356eec-cff7-4476-a18a-4f37e98683ce","memo":"AgEB4zVu7M/3RHahik836YaDzgADMdLqnJXrM1W2W7oJaFO8GAFkAQABAAAAAAAPOBZ9j8eF"}
-
-$ mixin-cli -f keystore.json sign /safe/outputs --exp 24h
-sign GET /safe/outputs with request id 87628ab0-a09a-4d4f-a4c6-e3bcd679fd88 & exp 24h0m0s
-
-eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjY3NjMyNjIsImlhdCI6MTcyNjY3Njg2MiwianRpIjoiODc2MjhhYjAtYTA5YS00ZDRmLWE0YzYtZTNiY2Q2NzlmZDg4Iiwic2NwIjoiRlVMTCIsInNpZCI6IjFjZDdiMjQ3LTIwOTItNDRhNS1iNTUzLTM5ZDY5NmJkN2I2YSIsInNpZyI6IjEwNDRmYzE0MTk1NzUwNmU0ZjY1MzA3NTdkMjI4OGRlNzY0OTE2MDMwYjNiMzhkZTY5MjY2MmU2MGQ4Njg5NzkiLCJ1aWQiOiI1MTE4NmQ3ZS1kNDg4LTQxN2QtYTAzMS1iNGUzNGY0ZmRmODYifQ.3IElpnJLwApj5Un0oHvo8oRWFRWUtSRZl84bPSbNqFwAgYA7CJTtAUw0xitUcHTzkZ2i7epbYiPkjHMFxgnFCg%                                     
-
-$ export TOKEN=eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjY3NjMyNjIsImlhdCI6MTcyNjY3Njg2MiwianRpIjoiODc2MjhhYjAtYTA5YS00ZDRmLWE0YzYtZTNiY2Q2NzlmZDg4Iiwic2NwIjoiRlVMTCIsInNpZCI6IjFjZDdiMjQ3LTIwOTItNDRhNS1iNTUzLTM5ZDY5NmJkN2I2YSIsInNpZyI6IjEwNDRmYzE0MTk1NzUwNmU0ZjY1MzA3NTdkMjI4OGRlNzY0OTE2MDMwYjNiMzhkZTY5MjY2MmU2MGQ4Njg5NzkiLCJ1aWQiOiI1MTE4NmQ3ZS1kNDg4LTQxN2QtYTAzMS1iNGUzNGY0ZmRmODYifQ.3IElpnJLwApj5Un0oHvo8oRWFRWUtSRZl84bPSbNqFwAgYA7CJTtAUw0xitUcHTzkZ2i7epbYiPkjHMFxgnFCg
-
-$ curl -i -X GET -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" http://127.0.0.1:8080/mixin/transfer\?\assetId="4d8c508b-91c5-375b-92b0-ee702ed2dac5"\&amount\="0.01&memo=AgEB9YUwuMtpTtu1HY09HJRC7AADMdLqnJXrM1W2W7oJaFO8GAFkAQABAAAAAAAPOlC3+Npt"
