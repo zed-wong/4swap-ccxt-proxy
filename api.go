@@ -10,6 +10,7 @@ import (
 	"github.com/fox-one/mixin-sdk-go/v2"
 	fswap "github.com/fox-one/4swap-sdk-go/v2"
 	"github.com/fox-one/mixin-sdk-go/v2/mixinnet"
+	"strconv"
 )
 
 // POST /4swap/preorder
@@ -129,6 +130,53 @@ func mixinEncodeHandler(ctx context.Context) http.HandlerFunc {
 	}
 }
 
+/*
+	curl -X POST http://127.0.0.1:8080/mixin/mixaddress \
+     -H "Content-Type: application/json" \
+     -d '{
+           "members": ["a753e0eb-3010-4c4a-a7b2-a7bda4063f62","099627f8-4031-42e3-a846-006ee598c56e","aefbfd62-727d-4424-89db-ae41f75d2e04","d68ca71f-0e2c-458a-bb9c-1d6c2eed2497","e4bc0740-f8fe-418c-ae1b-32d9926f5863"],
+           "threshold": "3"
+         }'
+*/
+func mixinMixAddressHandler(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var requestBody struct {
+			Members   []string `json:"members"`
+			Threshold string   `json:"threshold"`
+		}
+
+		decoder := json.NewDecoder(r.Body)
+		if err := decoder.Decode(&requestBody); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		if len(requestBody.Members) == 0 {
+			http.Error(w, "Missing required parameter: members", http.StatusBadRequest)
+			return
+		}
+		if requestBody.Threshold == "" {
+			http.Error(w, "Missing required parameter: threshold", http.StatusBadRequest)
+			return
+		}
+
+		thresholdUint8, err := strconv.ParseUint(requestBody.Threshold, 10, 8)
+		if err != nil {
+			http.Error(w, "Invalid threshold value", http.StatusBadRequest)
+			return
+		}
+
+		address := mixin.RequireNewMixAddress(requestBody.Members, uint8(thresholdUint8)).String()
+		response := map[string]interface{}{
+			"address": address,
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+	}
+}
+
 func StartAPIServer(ctx context.Context) {
 	group := ctx.Value(MTG_GROUP)
 	if group == nil {
@@ -136,12 +184,14 @@ func StartAPIServer(ctx context.Context) {
 	}
 	http.HandleFunc("/4swap/preorder", fswapPreOrderHandler(ctx))
 	http.HandleFunc("/mixin/encodetx", mixinEncodeHandler(ctx))
+	http.HandleFunc("/mixin/mixaddress", mixinMixAddressHandler(ctx))
 	
 	host := ctx.Value(HOST_KEY).(string)
 	port := ctx.Value(PORT_KEY).(int)
 	fmt.Printf("\n\033[1;34mStarting API server on \033[1;32m%s:%d\033[0m\n", host, port)
 	fmt.Printf("\033[1;33m[POST] \033[1;36m/4swap/preorder\033[0m - Endpoint to create a preorder for 4swap transactions (auth required)\n")
 	fmt.Printf("\033[1;33m[POST] \033[1;36m/mixin/encodetx\033[0m - Endpoint to encode a Mixin transaction\n")
+	fmt.Printf("\033[1;33m[POST] \033[1;36m/mixin/mixaddress\033[0m - Endpoint to create a Mixin mix address\n")
 	address := fmt.Sprintf("%s:%d", host, port)
 	if err := http.ListenAndServe(address, nil); err != nil {
 		panic(err)

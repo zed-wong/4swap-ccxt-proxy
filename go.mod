@@ -3,7 +3,6 @@ module github.com/zed-wong/4swap-ccxt-proxy
 go 1.21.13
 
 require (
-	github.com/btcsuite/btcutil v1.0.2
 	github.com/fox-one/4swap-sdk-go/v2 v2.0.1
 	github.com/fox-one/mixin-sdk-go/v2 v2.0.9
 	github.com/gofrs/uuid v4.4.0+incompatible
@@ -13,6 +12,7 @@ require (
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/bradfitz/iter v0.0.0-20191230175014-e8f45d346db8 // indirect
+	github.com/btcsuite/btcutil v1.0.2 // indirect
 	github.com/fox-one/msgpack v1.0.0 // indirect
 	github.com/go-resty/resty/v2 v2.12.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
