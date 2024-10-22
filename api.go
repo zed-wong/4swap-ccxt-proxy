@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strings"
 	"context"
+	"strconv"
 	"net/http"
 	"encoding/json"
 	"github.com/gofrs/uuid"
 	"github.com/fox-one/mixin-sdk-go/v2"
 	fswap "github.com/fox-one/4swap-sdk-go/v2"
 	"github.com/fox-one/mixin-sdk-go/v2/mixinnet"
-	"strconv"
 )
 
 // POST /4swap/preorder
@@ -189,7 +189,7 @@ func StartAPIServer(ctx context.Context) {
 	host := ctx.Value(HOST_KEY).(string)
 	port := ctx.Value(PORT_KEY).(int)
 	fmt.Printf("\n\033[1;34mStarting API server on \033[1;32m%s:%d\033[0m\n", host, port)
-	fmt.Printf("\033[1;33m[POST] \033[1;36m/4swap/preorder\033[0m - Endpoint to create a preorder for 4swap transactions (auth required)\n")
+	fmt.Printf("\033[1;33m[POST] \033[1;36m/4swap/preorder\033[0m - Endpoint to create a preorder for 4swap transactions (sign /me auth required)\n")
 	fmt.Printf("\033[1;33m[POST] \033[1;36m/mixin/encodetx\033[0m - Endpoint to encode a Mixin transaction\n")
 	fmt.Printf("\033[1;33m[POST] \033[1;36m/mixin/mixaddress\033[0m - Endpoint to create a Mixin mix address\n")
 	address := fmt.Sprintf("%s:%d", host, port)
