@@ -6,8 +6,10 @@ import (
 	"context"
 	"strconv"
 	"net/http"
+	"io/ioutil"
 	"encoding/json"
-	"github.com/gofrs/uuid"
+	// "github.com/gofrs/uuid"
+	"github.com/tidwall/gjson"
 	"github.com/fox-one/mixin-sdk-go/v2"
 	fswap "github.com/fox-one/4swap-sdk-go/v2"
 	"github.com/fox-one/mixin-sdk-go/v2/mixinnet"
@@ -47,52 +49,31 @@ func fswapPreOrderHandler(ctx context.Context) http.HandlerFunc {
 			return
 		}
 		client.UseToken(token)
-		var requestData struct {
-			PayAssetID  string `json:"payAssetId"`
-			FillAssetID string `json:"fillAssetId"`
-			PayAmount   string `json:"payAmount"`
-			FollowID    string `json:"followID"`
-		}
 
-		decoder := json.NewDecoder(r.Body)
-		if err := decoder.Decode(&requestData); err != nil {
-			http.Error(w, "Invalid JSON payload", http.StatusBadRequest)
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "Unable to read request body", http.StatusBadRequest)
 			return
 		}
+		defer r.Body.Close()
 
-		if requestData.FollowID == "" {
-			requestData.FollowID = uuid.Must(uuid.NewV4()).String()
-		}
-
-		if requestData.PayAssetID == "" {
-			http.Error(w, "Missing required parameter: payAssetId", http.StatusBadRequest)
+		payAssetId := gjson.Get(string(body), "payAssetId").String()
+		fillAssetId := gjson.Get(string(body), "fillAssetId").String()
+		payAmount := gjson.Get(string(body), "payAmount").String()
+		followID := gjson.Get(string(body), "followID").String()
+		if payAssetId == "" || fillAssetId == "" || payAmount == "" {
+			http.Error(w, "Missing required parameter", http.StatusBadRequest)
 			return
 		}
-		if requestData.FillAssetID == "" {
-			http.Error(w, "Missing required parameter: fillAssetId", http.StatusBadRequest)
-			return
-		}
-		if requestData.PayAmount == "" {
-			http.Error(w, "Missing required parameter: payAmount", http.StatusBadRequest)
-			return
-		}
-
-		payAssetId := requestData.PayAssetID
-		fillAssetId := requestData.FillAssetID
-		payAmount := requestData.PayAmount
-		followID := requestData.FollowID
 		memo, err := FswapPreOrder(ctx, payAssetId, fillAssetId, payAmount, followID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		// code := mixin.GenerateCode()
 		response := map[string]string{
 			"memo": memo,
 			"follow_id": followID,
 			"client_id": user.UserID,
-			// "code": "CAN BE ADDED IN FUTURE",
-			// "code_url": "CAN BE ADDED IN FUTURE",
 		}
 		jsonResponse, err := json.Marshal(response)
 		if err != nil {
