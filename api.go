@@ -47,26 +47,40 @@ func fswapPreOrderHandler(ctx context.Context) http.HandlerFunc {
 			return
 		}
 		client.UseToken(token)
-		payAssetId := r.FormValue("payAssetId")
-		fillAssetId := r.FormValue("fillAssetId")
-		payAmount := r.FormValue("payAmount")
-		followID := r.FormValue("followID")
-		if (followID == "") {
-			followID = uuid.Must(uuid.NewV4()).String()
+		var requestData struct {
+			PayAssetID  string `json:"payAssetId"`
+			FillAssetID string `json:"fillAssetId"`
+			PayAmount   string `json:"payAmount"`
+			FollowID    string `json:"followID"`
 		}
 
-		if payAssetId == "" {
+		decoder := json.NewDecoder(r.Body)
+		if err := decoder.Decode(&requestData); err != nil {
+			http.Error(w, "Invalid JSON payload", http.StatusBadRequest)
+			return
+		}
+
+		if requestData.FollowID == "" {
+			requestData.FollowID = uuid.Must(uuid.NewV4()).String()
+		}
+
+		if requestData.PayAssetID == "" {
 			http.Error(w, "Missing required parameter: payAssetId", http.StatusBadRequest)
 			return
 		}
-		if fillAssetId == "" {
+		if requestData.FillAssetID == "" {
 			http.Error(w, "Missing required parameter: fillAssetId", http.StatusBadRequest)
 			return
 		}
-		if payAmount == "" {
+		if requestData.PayAmount == "" {
 			http.Error(w, "Missing required parameter: payAmount", http.StatusBadRequest)
 			return
 		}
+
+		payAssetId := requestData.PayAssetID
+		fillAssetId := requestData.FillAssetID
+		payAmount := requestData.PayAmount
+		followID := requestData.FollowID
 		memo, err := FswapPreOrder(ctx, payAssetId, fillAssetId, payAmount, followID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
