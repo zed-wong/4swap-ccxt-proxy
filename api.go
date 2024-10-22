@@ -177,6 +177,21 @@ func mixinMixAddressHandler(ctx context.Context) http.HandlerFunc {
 	}
 }
 
+func rootAlive(w http.ResponseWriter, r *http.Request) {
+	response := map[string]interface{}{
+		"state": "alive",
+	}
+	jsonResponse, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write(jsonResponse)
+}
+
+
 func StartAPIServer(ctx context.Context) {
 	group := ctx.Value(MTG_GROUP)
 	if group == nil {
@@ -185,10 +200,12 @@ func StartAPIServer(ctx context.Context) {
 	http.HandleFunc("/4swap/preorder", fswapPreOrderHandler(ctx))
 	http.HandleFunc("/mixin/encodetx", mixinEncodeHandler(ctx))
 	http.HandleFunc("/mixin/mixaddress", mixinMixAddressHandler(ctx))
+	http.HandleFunc("/", rootAlive)
 	
 	host := ctx.Value(HOST_KEY).(string)
 	port := ctx.Value(PORT_KEY).(int)
 	fmt.Printf("\n\033[1;34mStarting API server on \033[1;32m%s:%d\033[0m\n", host, port)
+	fmt.Printf("\033[1;33m[GET] \033[1;36m/\033[0m - Endpoint to check health\n")
 	fmt.Printf("\033[1;33m[POST] \033[1;36m/4swap/preorder\033[0m - Endpoint to create a preorder for 4swap transactions (sign /me auth required)\n")
 	fmt.Printf("\033[1;33m[POST] \033[1;36m/mixin/encodetx\033[0m - Endpoint to encode a Mixin transaction\n")
 	fmt.Printf("\033[1;33m[POST] \033[1;36m/mixin/mixaddress\033[0m - Endpoint to create a Mixin mix address\n")
