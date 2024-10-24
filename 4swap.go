@@ -1,7 +1,10 @@
 package main
 
 import (
+	"time"
+	"errors"
 	"context"
+	"strconv"
 	"github.com/gofrs/uuid"
 	"github.com/shopspring/decimal"
 	fswap "github.com/fox-one/4swap-sdk-go/v2"
@@ -36,5 +39,30 @@ func FswapPreOrder(ctx context.Context, payAssetId, fillAssetId, payAmount, foll
 	}
 	minAmount := preOrder.FillAmount.Mul(decimal.NewFromFloat(0.99)).Truncate(8)
 	memo := fswap.BuildSwap(followID, fillAssetId, preOrder.Paths, minAmount)
+	return memo, nil
+}
+
+func FswapAddLiquidity(followID, oppositeAsset, slippage, expireDuration string) (string, error) {
+	if followID == "" {
+		followID = uuid.Must(uuid.NewV4()).String()
+	}
+	slippageDecimal, err := decimal.NewFromString(slippage)
+	if err != nil {
+		return "", err
+	}
+	expireDurationInt, err := strconv.Atoi(expireDuration)
+	if err != nil {
+		return "", err
+	}
+	expireDurationX := time.Second * time.Duration(expireDurationInt)
+	memo := fswap.BuildAdd(followID, oppositeAsset, slippageDecimal, expireDurationX)
+	return memo, nil
+}
+
+func FswapRemoveLiquidity(followID string) (string, error) {
+	if followID == "" {
+		return "", errors.New("followID is required")
+	}
+	memo := fswap.BuildRemove(followID)
 	return memo, nil
 }

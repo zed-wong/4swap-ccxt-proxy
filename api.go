@@ -87,6 +87,79 @@ func fswapPreOrderHandler(ctx context.Context) http.HandlerFunc {
 	}
 }
 
+func fswapAddLiquidityHandler(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "Unable to read request body", http.StatusBadRequest)
+			return
+		}
+		defer r.Body.Close()
+
+		followID := gjson.Get(string(body), "followID").String()
+		oppositeAsset := gjson.Get(string(body), "oppositeAsset").String()
+		slippage := gjson.Get(string(body), "slippage").String()
+		expireDuration := gjson.Get(string(body), "expireDuration").String()
+		if oppositeAsset == "" || slippage == "" || expireDuration == "" {
+			http.Error(w, "Missing required parameter", http.StatusBadRequest)
+			return
+		}
+		memo, err := FswapAddLiquidity(followID, oppositeAsset, slippage, expireDuration)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		response := map[string]string{
+			"memo": memo,
+			"follow_id": followID,
+		}
+		jsonResponse, err := json.Marshal(response)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(jsonResponse)
+	}
+}
+
+func fswapRemoveLiquidityHandler(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "Unable to read request body", http.StatusBadRequest)
+			return
+		}
+		defer r.Body.Close()
+
+		followID := gjson.Get(string(body), "followID").String()
+		if followID == "" {
+			http.Error(w, "Missing required parameter: followID", http.StatusBadRequest)
+			return
+		}
+		memo, err := FswapRemoveLiquidity(followID)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		response := map[string]string{
+			"memo": memo,
+			"follow_id": followID,
+		}
+		jsonResponse, err := json.Marshal(response)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write(jsonResponse)
+	}
+}
+
 // POST /mixin/encodetx
 // Parameters:
 // tx: the string of the transaction
@@ -133,6 +206,7 @@ func mixinEncodeHandler(ctx context.Context) http.HandlerFunc {
            "threshold": "3"
          }'
 */
+
 func mixinMixAddressHandler(ctx context.Context) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var requestBody struct {
@@ -193,6 +267,8 @@ func StartAPIServer(ctx context.Context) {
 		panic("4swap MTG group not found in context")
 	}
 	http.HandleFunc("/4swap/preorder", fswapPreOrderHandler(ctx))
+	http.HandleFunc("/4swap/add_liquidity", fswapAddLiquidityHandler(ctx))
+	http.HandleFunc("/4swap/remove_liquidity", fswapRemoveLiquidityHandler(ctx))
 	http.HandleFunc("/mixin/encodetx", mixinEncodeHandler(ctx))
 	http.HandleFunc("/mixin/mixaddress", mixinMixAddressHandler(ctx))
 	http.HandleFunc("/", rootAlive)
@@ -202,6 +278,8 @@ func StartAPIServer(ctx context.Context) {
 	fmt.Printf("\n\033[1;34mStarting API server on \033[1;32m%s:%d\033[0m\n", host, port)
 	fmt.Printf("\033[1;33m[GET] \033[1;36m/\033[0m - Endpoint to check health\n")
 	fmt.Printf("\033[1;33m[POST] \033[1;36m/4swap/preorder\033[0m - Endpoint to create a preorder for 4swap transactions (sign /me auth required)\n")
+	fmt.Printf("\033[1;33m[POST] \033[1;36m/4swap/add_liquidity\033[0m - Endpoint to add liquidity to 4swap\n")
+	fmt.Printf("\033[1;33m[POST] \033[1;36m/4swap/remove_liquidity\033[0m - Endpoint to remove liquidity from 4swap\n")
 	fmt.Printf("\033[1;33m[POST] \033[1;36m/mixin/encodetx\033[0m - Endpoint to encode a Mixin transaction\n")
 	fmt.Printf("\033[1;33m[POST] \033[1;36m/mixin/mixaddress\033[0m - Endpoint to create a Mixin mix address\n")
 	address := fmt.Sprintf("%s:%d", host, port)
