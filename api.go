@@ -135,10 +135,6 @@ func fswapRemoveLiquidityHandler(ctx context.Context) http.HandlerFunc {
 		defer r.Body.Close()
 
 		followID := gjson.Get(string(body), "followID").String()
-		if followID == "" {
-			http.Error(w, "Missing required parameter: followID", http.StatusBadRequest)
-			return
-		}
 		memo, err := FswapRemoveLiquidity(followID)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -278,8 +274,8 @@ func StartAPIServer(ctx context.Context) {
 	fmt.Printf("\n\033[1;34mStarting API server on \033[1;32m%s:%d\033[0m\n", host, port)
 	fmt.Printf("\033[1;33m[GET] \033[1;36m/\033[0m - Endpoint to check health\n")
 	fmt.Printf("\033[1;33m[POST] \033[1;36m/4swap/preorder\033[0m - Endpoint to create a preorder for 4swap transactions (sign /me auth required)\n")
-	fmt.Printf("\033[1;33m[POST] \033[1;36m/4swap/add_liquidity\033[0m - Endpoint to add liquidity to 4swap\n")
-	fmt.Printf("\033[1;33m[POST] \033[1;36m/4swap/remove_liquidity\033[0m - Endpoint to remove liquidity from 4swap\n")
+	fmt.Printf("\033[1;33m[POST] \033[1;36m/4swap/add_liquidity\033[0m - Endpoint to get the memo for adding liquidity to 4swap\n")
+	fmt.Printf("\033[1;33m[POST] \033[1;36m/4swap/remove_liquidity\033[0m - Endpoint to get the memo for removing liquidity from 4swap\n")
 	fmt.Printf("\033[1;33m[POST] \033[1;36m/mixin/encodetx\033[0m - Endpoint to encode a Mixin transaction\n")
 	fmt.Printf("\033[1;33m[POST] \033[1;36m/mixin/mixaddress\033[0m - Endpoint to create a Mixin mix address\n")
 	address := fmt.Sprintf("%s:%d", host, port)

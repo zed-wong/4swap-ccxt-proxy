@@ -2,7 +2,6 @@ package main
 
 import (
 	"time"
-	"errors"
 	"context"
 	"strconv"
 	"github.com/gofrs/uuid"
@@ -61,7 +60,7 @@ func FswapAddLiquidity(followID, oppositeAsset, slippage, expireDuration string)
 
 func FswapRemoveLiquidity(followID string) (string, error) {
 	if followID == "" {
-		return "", errors.New("followID is required")
+		followID = uuid.Must(uuid.NewV4()).String()
 	}
 	memo := fswap.BuildRemove(followID)
 	return memo, nil
