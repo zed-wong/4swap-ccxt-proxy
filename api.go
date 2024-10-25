@@ -156,6 +156,12 @@ func fswapRemoveLiquidityHandler(ctx context.Context) http.HandlerFunc {
 	}
 }
 
+func fswapCombinedPairsHandler(ctx context.Context) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		
+	}
+}
+
 // POST /mixin/encodetx
 // Parameters:
 // tx: the string of the transaction
@@ -265,6 +271,7 @@ func StartAPIServer(ctx context.Context) {
 	http.HandleFunc("/4swap/preorder", fswapPreOrderHandler(ctx))
 	http.HandleFunc("/4swap/add_liquidity", fswapAddLiquidityHandler(ctx))
 	http.HandleFunc("/4swap/remove_liquidity", fswapRemoveLiquidityHandler(ctx))
+	// http.HandleFunc("/4swap/combined_pairs", fswapCombinedPairsHandler(ctx))
 	http.HandleFunc("/mixin/encodetx", mixinEncodeHandler(ctx))
 	http.HandleFunc("/mixin/mixaddress", mixinMixAddressHandler(ctx))
 	http.HandleFunc("/", rootAlive)

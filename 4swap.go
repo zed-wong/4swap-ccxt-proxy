@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 	"context"
 	"strconv"
@@ -64,4 +65,21 @@ func FswapRemoveLiquidity(followID string) (string, error) {
 	}
 	memo := fswap.BuildRemove(followID)
 	return memo, nil
+}
+
+// I was planned to write a function to combine /cmc/pairs and /pairs
+// Because /cmc/pairs doesn't return amount in the pool 
+// which will be needed for calculating the amount needed for add_liquidity
+// But turns out /pairs/{base_id}/{quote_id} is implemented in sdk but not written in api doc
+// So this function is unnessary now, but can be used for simplify the create add_liqudiity order process
+// Right now we need to call /pairs/{base_id}/{quote_id} to get the amount in the pool
+// If we have this function, we can get the amount in the pool by calling fetchMarket method in ccxt
+func FswapCombinedPairs(ctx context.Context) (string, error) {
+	client := ctx.Value("client").(*fswap.Client)
+	combinedPairs, err := client.ListPairs(ctx)
+	fmt.Println(combinedPairs)
+	if err != nil {
+		return "", err
+	}
+	return "", nil
 }
